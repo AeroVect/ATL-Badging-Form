@@ -171,7 +171,7 @@ button{font-size:1rem;border-radius:8px;cursor:pointer;padding:12px 22px;border:
   <button id="resetBtn" type="button">Clear Form</button>
   <span id="status"></span>
 </div>
-<p class="hint" style="text-align:center">Everything runs in your browser — no information is uploaded or saved anywhere. The downloaded PDF must still be printed and signed in wet ink.</p>
+<p class="hint" style="text-align:center">Everything runs in your browser — no information is uploaded or saved anywhere. Please save the PDF and email it to lyndsay@aerovect.com. The form must still be printed and signed in wet ink.</p>
 </main>
 
 <script>
@@ -318,7 +318,7 @@ async function generate(){
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    st.className='ok'; st.textContent='Downloaded '+fname;
+    st.className='ok'; st.textContent='Downloaded '+fname+'. Please save the PDF and email it to lyndsay@aerovect.com.';
   }catch(err){
     console.error(err);
     st.className='err'; st.textContent='Error: '+err.message;
