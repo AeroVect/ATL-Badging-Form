@@ -298,7 +298,11 @@ async function generate(){
     // Citizenship
     const cit=radioVal('cit');
     if(cit==='us'){ D('US State of Birth',val('usState')); }
-    if(cit==='abroad'){ D('Country of Birth-US Citizens',val('abroadCountry')); D('Supporting Documents',val('abroadDoc')); }
+    if(cit==='abroad'){
+      D('Country of Birth-US Citizens',val('abroadCountry')); D('Supporting Documents',val('abroadDoc'));
+      // Section 5 (fingerprint page) country fields — shared with the page-1 Non-US lines
+      D('Country of Birth',val('abroadCountry')); D('Country of Citizenship','United States');
+    }
     if(cit==='non'){ D('Country of Birth',val('nonCountry')); D('Country of Citizenship',val('nonCitizenship')); D('Supporting Documents Non-US',val('nonDoc')); }
 
     // Residence & contact
