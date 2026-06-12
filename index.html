@@ -177,7 +177,7 @@ button{font-size:1rem;border-radius:8px;cursor:pointer;padding:12px 22px;border:
   <button id="resetBtn" type="button">Clear Form</button>
   <span id="status"></span>
 </div>
-<p class="hint" style="text-align:center">Your entries are used only to build the PDF. When you click Generate, the completed application is emailed automatically to badging@aerovect.com through AeroVect's Google account, and a copy downloads to your device. The form must still be printed and signed in wet ink.</p>
+<p class="hint" style="text-align:center">Your entries are used only to build the PDF. When you click Generate, the completed application is emailed to badging@aerovect.com through AeroVect's Google account, and a copy is emailed to your personal address. The form requires wet-ink signatures at your badging appointment.</p>
 </main>
 
 <script>
@@ -300,8 +300,12 @@ async function generate(){
     if(cit==='us'){ D('US State of Birth',val('usState')); }
     if(cit==='abroad'){
       D('Country of Birth-US Citizens',val('abroadCountry')); D('Supporting Documents',val('abroadDoc'));
-      // Section 5 (fingerprint page) country fields — shared with the page-1 Non-US lines
-      D('Country of Birth',val('abroadCountry')); D('Country of Citizenship','United States');
+      // Section 5 country lines share form fields with page 1's Non-US Citizens section,
+      // so draw the text directly onto page 5 to avoid filling the Non-US section.
+      const helv=await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const p5=doc.getPage(4);
+      p5.drawText(val('abroadCountry'),{x:206,y:668,size:10,font:helv});   // Country of Birth line
+      p5.drawText('United States',{x:155,y:622,size:10,font:helv});        // Country of Citizenship line
     }
     if(cit==='non'){ D('Country of Birth',val('nonCountry')); D('Country of Citizenship',val('nonCitizenship')); D('Supporting Documents Non-US',val('nonDoc')); }
 
@@ -331,10 +335,12 @@ async function generate(){
     const bytes=await doc.save();
     const safe=s=>s.replace(/[^A-Za-z0-9]+/g,'');
     const fname=`CRED25-1125_${safe(val('last'))||'Applicant'}_${safe(val('first'))||''}.pdf`.replace(/_\.pdf$/,'.pdf');
-    const blob=new Blob([bytes],{type:'application/pdf'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    const downloadPdf=()=>{
+      const blob=new Blob([bytes],{type:'application/pdf'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    };
 
     if(SUBMIT_URL && SUBMIT_URL.indexOf('http')===0){
       st.className=''; st.textContent='Submitting application to the badging team…';
@@ -345,14 +351,16 @@ async function generate(){
           body:JSON.stringify({token:TOKEN,filename:fname,name:fullName,copyEmail:val('copyEmail'),pdf:btoa(bin)})});
         const result=await resp.json();
         if(result.ok){
-          st.className='ok'; st.textContent='Submitted! Your application was emailed to badging@aerovect.com, and a copy was sent to '+val('copyEmail')+'. A copy also downloaded as '+fname+'.';
+          st.className='ok'; st.textContent='Submitted! Your application was emailed to badging@aerovect.com, and a copy was sent to '+val('copyEmail')+'.';
         }else{ throw new Error(result.error||'submission rejected'); }
       }catch(subErr){
         console.error(subErr);
+        downloadPdf();
         st.className='err';
-        st.textContent='Automatic submission failed — please email the downloaded PDF ('+fname+') to badging@aerovect.com.';
+        st.textContent='Automatic submission failed — your PDF was downloaded instead ('+fname+'). Please email it to badging@aerovect.com.';
       }
     }else{
+      downloadPdf();
       st.className='ok'; st.textContent='Downloaded '+fname+'. Please save the PDF and email it to badging@aerovect.com.';
     }
   }catch(err){
